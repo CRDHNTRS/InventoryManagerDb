@@ -5,13 +5,77 @@ using System.Windows.Forms;
 
 namespace InventoryManagerDb
 {
-    public partial class MainForm : Form
+    public class MainForm : Form
     {
+        // Controls
+        private TextBox txtName, txtCategory;
+        private NumericUpDown numQuantity, numPrice;
+        private Button btnAdd, btnUpdate, btnDelete, btnRefresh, btnExit;
+        private DataGridView dataGridView1;
+        private Label lblStatus;
+
         public MainForm()
         {
-            InitializeComponent();
+            InitializeUI();
             Db.Initialize();
             LoadProducts();
+        }
+
+        private void InitializeUI()
+        {
+            this.Text = "Inventory Manager";
+            this.Width = 800;
+            this.Height = 500;
+
+            // Inputs
+            txtName = new TextBox { Left = 10, Top = 10, Width = 150 };
+            txtCategory = new TextBox { Left = 170, Top = 10, Width = 150 };
+
+            numQuantity = new NumericUpDown { Left = 10, Top = 40, Width = 100, Minimum = 0, Maximum = 10000 };
+            numPrice = new NumericUpDown { Left = 120, Top = 40, Width = 100, DecimalPlaces = 2, Minimum = 0, Maximum = 100000 };
+
+            // Buttons
+            btnAdd = new Button { Left = 10, Top = 80, Width = 80, Text = "Add" };
+            btnUpdate = new Button { Left = 100, Top = 80, Width = 80, Text = "Update" };
+            btnDelete = new Button { Left = 190, Top = 80, Width = 80, Text = "Delete" };
+            btnRefresh = new Button { Left = 280, Top = 80, Width = 80, Text = "Refresh" };
+            btnExit = new Button { Left = 370, Top = 80, Width = 80, Text = "Exit" };
+
+            // Grid
+            dataGridView1 = new DataGridView
+            {
+                Left = 10,
+                Top = 120,
+                Width = 760,
+                Height = 280,
+                ReadOnly = true,
+                SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+                MultiSelect = false
+            };
+
+            // Status label
+            lblStatus = new Label { Left = 10, Top = 410, Width = 500, Text = "Status: Ready" };
+
+            // Add controls
+            Controls.Add(txtName);
+            Controls.Add(txtCategory);
+            Controls.Add(numQuantity);
+            Controls.Add(numPrice);
+            Controls.Add(btnAdd);
+            Controls.Add(btnUpdate);
+            Controls.Add(btnDelete);
+            Controls.Add(btnRefresh);
+            Controls.Add(btnExit);
+            Controls.Add(dataGridView1);
+            Controls.Add(lblStatus);
+
+            // Events
+            btnAdd.Click += btnAdd_Click;
+            btnUpdate.Click += btnUpdate_Click;
+            btnDelete.Click += btnDelete_Click;
+            btnRefresh.Click += (s, e) => LoadProducts();
+            btnExit.Click += (s, e) => Application.Exit();
+            dataGridView1.SelectionChanged += dataGridView1_SelectionChanged;
         }
 
         private void LoadProducts()
@@ -44,13 +108,6 @@ namespace InventoryManagerDb
                 MessageBox.Show("All fields are required.");
                 return false;
             }
-
-            if (numQuantity.Value < 0 || numPrice.Value < 0)
-            {
-                MessageBox.Show("Values must be >= 0.");
-                return false;
-            }
-
             return true;
         }
 
@@ -77,6 +134,7 @@ namespace InventoryManagerDb
 
                 lblStatus.Text = "Product added.";
                 LoadProducts();
+                ClearInputs();
             }
             catch (Exception ex)
             {
@@ -147,14 +205,22 @@ namespace InventoryManagerDb
             }
         }
 
-        private void btnRefresh_Click(object sender, EventArgs e)
+        private void dataGridView1_SelectionChanged(object sender, EventArgs e)
         {
-            LoadProducts();
+            if (dataGridView1.CurrentRow == null) return;
+
+            txtName.Text = dataGridView1.CurrentRow.Cells["Name"].Value.ToString();
+            txtCategory.Text = dataGridView1.CurrentRow.Cells["Category"].Value.ToString();
+            numQuantity.Value = Convert.ToDecimal(dataGridView1.CurrentRow.Cells["Quantity"].Value);
+            numPrice.Value = Convert.ToDecimal(dataGridView1.CurrentRow.Cells["Price"].Value);
         }
 
-        private void btnExit_Click(object sender, EventArgs e)
+        private void ClearInputs()
         {
-            Application.Exit();
+            txtName.Clear();
+            txtCategory.Clear();
+            numQuantity.Value = 0;
+            numPrice.Value = 0;
         }
     }
 }
